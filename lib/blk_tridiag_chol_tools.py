@@ -42,79 +42,42 @@ def blk_tridiag_chol(A, B):
     R[0] = tf.concat([tf.expand_dims(L, 0), R[0]], 0)
     return R
 
-if __name__ == '__main__':
-    import numpy.testing as npt
+def blk_chol_inv(A, B, b, lower=True, transpose=False):
+    '''
+    Solve the equation Cx = b for x, where C is assumed to be a
+    block-bi-diagonal matrix ( where only the first (lower or upper)
+    off-diagonal block is nonzero.
+    Inputs:
+    A - [T x n x n]   tensor, where each A[i,:,:] is the ith block diagonal matrix
+    B - [T-1 x n x n] tensor, where each B[i,:,:] is the ith (upper or lower)
+        1st block off-diagonal matrix
+    b - [T x n] tensor
 
-    npA = np.array([[1, .9], [.9, 4]]).astype('float32')
-    npB = (.01 * np.array([[2, 7], [7, 4]])).astype('float32')
-    npC = np.array([[3, 0.], [0, 1]]).astype('float32')
-    npD = (.01 * np.array([[7, 2], [9, 3]])).astype('float32')
-    npE = (.01 * np.array([[2, 0], [4, 3]])).astype('float32')
-    npF = (.01 * np.array([[1, 0], [2, 7]])).astype('float32')
-    npG = (.01 * np.array([[3, 0], [8, 1]])).astype('float32')
+    lower (default: True) - boolean specifying whether to treat B as the lower
+          or upper 1st block off-diagonal of matrix C
+    transpose (default: False) - boolean specifying whether to transpose the
+          off-diagonal blocks B[i,:,:] (useful if you want to compute solve
+          the problem C^T x = b with a representation of C.)
+    Outputs:
+    x - solution of Cx = b
+    '''
+    def _step(acc, inputs):
+        x = acc
+        A, B, b = inputs
+        return tf.matrix_solve(A, b - tf.matmul(B, x))
 
-    npZ = np.array([[0, 0], [0, 0]]).astype('float32')
-
-    lowermat = np.bmat([[npF,   npZ,   npZ,   npZ],
-                        [npB.T, npC,   npZ,   npZ],
-                        [npZ,   npD.T, npE,   npZ],
-                        [npZ,   npZ,   npB.T, npG]])
-    cholmat = lowermat.dot(lowermat.T)
-
-    def test_compute_chol():
-        L = np.linalg.cholesky(npA)
-        C = npZ
-        A = npF
-        B = npB
-
-        CC = np.linalg.solve(L, B).T
-        D = A - CC.dot(CC.T)
-        LL = np.linalg.cholesky(D)
-
-        LLL, CCC = _compute_chol([tf.constant(L), tf.constant(C)],
-                                 [tf.constant(A), tf.constant(B)])
-
-        with tf.Session() as sess:
-            npt.assert_allclose(LLL.eval(), LL)
-            npt.assert_allclose(CCC.eval(), CC, rtol=1e-5)
-
-        return
-
-    def np_compute_chol(acc, inputs):
-        """
-        Compute the Cholesky decomposition of a symmetric block tridiagonal matrix.
-        acc is the output of the previous loop
-        inputs is a tuple of inputs
-        """
-        L, _ = acc
-        A, B = inputs
-
-        C = np.linalg.solve(L, B).T
-        D = A - C.dot(C.T)
-        L = np.linalg.cholesky(D)
-
-        return [L, C]
-
-    def test_blk_tridiag_chol():
-        alist = [cholmat[i:(i+2),i:(i+2)] for i in range(0, cholmat.shape[0], 2)]
-        blist = [cholmat[(i+2):(i+4),i:(i+2)].T for i in range(0, cholmat.shape[0] - 2, 2)]
-
-        theDiag = tf.stack(list(map(tf.constant, alist)))
-        theOffDiag = tf.stack(list(map(tf.constant, blist)))
-
-        R = blk_tridiag_chol(theDiag, theOffDiag)
-
-        with tf.Session() as sess:
-            R0, R1 = R[0].eval(), R[1].eval()
-
-        for (x, y) in zip(R0, [npF, npC, npE, npG]):
-            npt.assert_allclose(x, y, atol=1e-4)
-
-        for (x, y) in zip(R1, [npB.T, npD.T, npB.T]):
-            npt.assert_allclose(x, y, atol=1e-4)
-
-        return
-
-    test_list = [test_compute_chol, test_blk_tridiag_chol]
-    for test in test_list:
-        test()
+    if transpose:
+        A = tf.transpose(A, perm=[0, 2, 1])
+        B = tf.transpose(B, perm=[0, 2, 1])
+    if lower:
+        x0 = tf.matrix_solve(A[0], b[0])
+        X = tf.scan(_step, [A[1:], B, b[1:]], initializer=x0)
+        X = tf.concat([tf.expand_dims(x0,0), X], 0)
+    else:
+        # xN = Tla.matrix_inverse(A[-1]).dot(b[-1])
+        # def upper_step(Akm1, Bkm1, bkm1, xk):
+        #     return Tla.matrix_inverse(Akm1).dot(bkm1-(Bkm1).dot(xk))
+        # X = theano.scan(fn = upper_step, sequences=[A[:-1][::-1], B[::-1], b[:-1][::-1]], outputs_info=[xN])[0]
+        # X = T.concatenate([T.shape_padleft(xN), X])[::-1]
+        pass
+    return X
