@@ -48,17 +48,28 @@ def test_blk_chol_inv():
 
     alist = [npF, npC, npE, npG]
     blist = [npB.T, npD.T, npB.T]
-    theDiag = torch.from_numpy(np.stack(alist))
-    theOffDiag = torch.from_numpy(np.stack(blist))
+    A = torch.from_numpy(np.stack(alist))
+    B = torch.from_numpy(np.stack(blist))
     b = torch.from_numpy(npb)
 
     # now solve C * x = b by inverting one Cholesky factor of C at a time
-    ib = blk.blk_chol_inv(theDiag, theOffDiag, b)
-    tx = blk.blk_chol_inv(theDiag, theOffDiag, ib, lower=False, transpose=True)
-
-    # with tf.Session() as sess:
-    #     ib_val = ib.eval()
-    #     # x_val = x.eval()
+    ib = blk.blk_chol_inv(A, B, b)
+    tx = blk.blk_chol_inv(A, B, ib, lower=False, transpose=True)
 
     npt.assert_allclose(ib.numpy().flatten(), xl, atol=1e-5, rtol=1e-4)
     npt.assert_allclose(tx.numpy().flatten(), x, atol=1e-5, rtol=1e-3)
+
+def test_blk_chol_mtimes():
+    alist = [npF, npC, npE, npG]
+    blist = [npB.T, npD.T, npB.T]
+    A = torch.from_numpy(np.stack(alist))
+    B = torch.from_numpy(np.stack(blist))
+    x = torch.from_numpy(npb)
+
+    b = lowermat.dot(np.array([1, 2, 3, 4, 5, 6, 7, 8]).astype(prec))
+    bt = lowermat.T.dot(np.array([1, 2, 3, 4, 5, 6, 7, 8]).astype(prec))
+
+    tb = blk.blk_chol_mtimes(A, B, x)
+    tbt = blk.blk_chol_mtimes(A, B, x, lower=False, transpose=True)
+    npt.assert_allclose(tb.numpy().flatten(), b, atol=1e-5)
+    npt.assert_allclose(tbt.numpy().flatten(), bt, atol=1e-5)
