@@ -1,5 +1,5 @@
 """
-Tensorflow implementation of functions to perform the Cholesky factorization
+Pytorch implementation of functions to perform the Cholesky factorization
 of a block tridiagonal matrix. Ported from Evan Archer's implementation
 here: https://github.com/earcher/vilds/blob/master/code/lib/blk_tridiag_chol_tools.py
 """
@@ -34,7 +34,7 @@ def blk_tridiag_chol(A, B):
     return R
 
 def blk_chol_inv(A, B, b, lower=True, transpose=False):
-    '''
+    """
     Solve the equation Cx = b for x, where C is assumed to be a
     block-bi-diagonal matrix ( where only the first (lower or upper)
     off-diagonal block is nonzero.
@@ -51,7 +51,7 @@ def blk_chol_inv(A, B, b, lower=True, transpose=False):
           the problem C^T x = b with a representation of C.)
     Outputs:
     x - solution of Cx = b
-    '''
+    """
     X = torch.FloatTensor(A.size(0), A.size(1))
 
     if transpose:
@@ -74,7 +74,7 @@ def blk_chol_inv(A, B, b, lower=True, transpose=False):
     return X
 
 def blk_chol_mtimes(A, B, x, lower = True, transpose = False):
-    '''
+    """
     Evaluate Cx = b, where C is assumed to be a
     block-bi-diagonal matrix ( where only the first (lower or upper)
     off-diagonal block is nonzero.
@@ -90,7 +90,7 @@ def blk_chol_mtimes(A, B, x, lower = True, transpose = False):
           the problem C^T x = b with a representation of C.)
     Outputs:
     b - result of Cx = b
-    '''
+    """
     b = torch.FloatTensor(A.size(0), A.size(1))
 
     if transpose:
