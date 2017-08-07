@@ -5,22 +5,8 @@ here: https://github.com/earcher/vilds/blob/master/code/lib/blk_tridiag_chol_too
 """
 
 import tensorflow as tf
+import torch
 import numpy as np
-
-def _compute_chol(acc, inputs):
-    """
-    Compute the Cholesky decomposition of a symmetric block tridiagonal matrix.
-    acc is the output of the previous loop
-    inputs is a tuple of inputs
-    """
-    L, _ = acc
-    A, B = inputs
-
-    C = tf.transpose(tf.matrix_solve(L, B))
-    D = A - tf.matmul(C, tf.transpose(C))
-    L = tf.cholesky(D)
-
-    return [L, C]
 
 def blk_tridiag_chol(A, B):
     """
@@ -35,11 +21,16 @@ def blk_tridiag_chol(A, B):
         * R[0] - [T x n x n] tensor of block diagonal elements of Cholesky decomposition
         * R[1] - [T-1 x n x n] tensor of (lower) 1st block off-diagonal elements of Cholesky
     """
-    L = tf.cholesky(A[0])
-    C = tf.zeros_like(B[0])
+    R = [torch.FloatTensor(A.size()), torch.FloatTensor(B.size())]
+    L = torch.potrf(A[0], upper=False)
+    R[0][0] = L
 
-    R = tf.scan(_compute_chol, [A[1:], B], initializer=[L, C])
-    R[0] = tf.concat([tf.expand_dims(L, 0), R[0]], 0)
+    for i in range(B.size()[0]):
+        C = torch.t(torch.gesv(B[i], L)[0])
+        D = A[i + 1] - torch.matmul(C, torch.t(C))
+        L = torch.potrf(D, upper=False)
+        R[0][i + 1], R[1][i] = L, C
+
     return R
 
 def blk_chol_inv(A, B, b, lower=True, transpose=False):
@@ -67,8 +58,9 @@ def blk_chol_inv(A, B, b, lower=True, transpose=False):
         return tf.matrix_solve(A, b - tf.matmul(B, x))
 
     if transpose:
-        A = tf.transpose(A, perm=[0, 2, 1])
-        B = tf.transpose(B, perm=[0, 2, 1])
+        A = torch.transpose(A, 1, 2)
+        B = torch.transpose(B, 1, 2)
+        
     if lower:
         x0 = tf.matrix_solve(A[0], b[0])
         X = tf.scan(_step, [A[1:], B, b[1:]], initializer=x0)

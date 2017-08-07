@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import torch
 import numpy.testing as npt
 
 import blk_tridiag_chol_tools as blk
@@ -22,42 +23,23 @@ lowermat = np.bmat([[npF,   npZ,   npZ,   npZ],
                     [npB.T, npC,   npZ,   npZ],
                     [npZ,   npD.T, npE,   npZ],
                     [npZ,   npZ,   npB.T, npG]])
+lowermat = np.array(lowermat)
 cholmat = lowermat.dot(lowermat.T)
-
-def test_compute_chol():
-    L = np.linalg.cholesky(npA)
-    C = npZ
-    A = npA
-    B = npB
-
-    CC = np.linalg.solve(L, B).T
-    D = A - CC.dot(CC.T)
-    LL = np.linalg.cholesky(D)
-
-    LLL, CCC = blk._compute_chol([tf.constant(L), tf.constant(C)],
-                             [tf.constant(A), tf.constant(B)])
-
-    with tf.Session() as sess:
-        npt.assert_allclose(LLL.eval(), LL)
-        npt.assert_allclose(CCC.eval(), CC, rtol=1e-5)
 
 def test_blk_tridiag_chol():
     alist = [cholmat[i:(i+2),i:(i+2)] for i in range(0, cholmat.shape[0], 2)]
     blist = [cholmat[(i+2):(i+4),i:(i+2)].T for i in range(0, cholmat.shape[0] - 2, 2)]
 
-    theDiag = tf.stack(list(map(tf.constant, alist)))
-    theOffDiag = tf.stack(list(map(tf.constant, blist)))
+    A = torch.from_numpy(np.stack(alist))
+    B = torch.from_numpy(np.stack(blist))
 
-    R = blk.blk_tridiag_chol(theDiag, theOffDiag)
+    R = blk.blk_tridiag_chol(A, B)
 
-    with tf.Session() as sess:
-        R0, R1 = R[0].eval(), R[1].eval()
+    npt.assert_allclose(R[0].numpy(),
+        np.stack([npF, npC, npE, npG]), atol=1e-4, rtol=1e-5)
 
-    for (x, y) in zip(R0, [npF, npC, npE, npG]):
-        npt.assert_allclose(x, y, atol=1e-4, rtol=1e-5)
-
-    for (x, y) in zip(R1, [npB.T, npD.T, npB.T]):
-        npt.assert_allclose(x, y, atol=1e-4, rtol=1e-5)
+    npt.assert_allclose(R[1].numpy(),
+        np.stack([npB.T, npD.T, npB.T]), atol=1e-4, rtol=1e-5)
 
 
 def test_blk_chol_inv():
