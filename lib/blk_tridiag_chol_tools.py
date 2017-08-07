@@ -4,7 +4,6 @@ of a block tridiagonal matrix. Ported from Evan Archer's implementation
 here: https://github.com/earcher/vilds/blob/master/code/lib/blk_tridiag_chol_tools.py
 """
 
-import tensorflow as tf
 import torch
 import numpy as np
 
