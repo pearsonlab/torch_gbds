@@ -43,22 +43,22 @@ def test_blk_tridiag_chol():
 
 
 def test_blk_chol_inv():
-    xl = np.linalg.solve(lowermat, np.array([1, 2, 3, 4, 5, 6, 7, 8]))
-    x = np.linalg.solve(cholmat, np.array([1, 2, 3, 4, 5, 6, 7, 8]))
+    xl = np.linalg.solve(lowermat, np.array([1, 2, 3, 4, 5, 6, 7, 8]).astype(prec))
+    x = np.linalg.solve(cholmat, np.array([1, 2, 3, 4, 5, 6, 7, 8]).astype(prec))
 
     alist = [npF, npC, npE, npG]
     blist = [npB.T, npD.T, npB.T]
-    theDiag = tf.stack(list(map(tf.constant, alist)))
-    theOffDiag = tf.stack(list(map(tf.constant, blist)))
-    b = tf.expand_dims(tf.constant(npb), -1)
+    theDiag = torch.from_numpy(np.stack(alist))
+    theOffDiag = torch.from_numpy(np.stack(blist))
+    b = torch.from_numpy(npb)
 
     # now solve C * x = b by inverting one Cholesky factor of C at a time
     ib = blk.blk_chol_inv(theDiag, theOffDiag, b)
-    # tfx = blk.blk_chol_inv(theDiag, theOffDiag, ib, lower=False, transpose=True)
+    tx = blk.blk_chol_inv(theDiag, theOffDiag, ib, lower=False, transpose=True)
 
-    with tf.Session() as sess:
-        ib_val = ib.eval()
-        # tfx_val = tfx.eval()
+    # with tf.Session() as sess:
+    #     ib_val = ib.eval()
+    #     # x_val = x.eval()
 
-    npt.assert_allclose(ib_val.flatten(), xl, atol=1e-5, rtol=1e-4)
-    # npt.assert_allclose(tfx_val.flatten(), x, atol=1e-5)
+    npt.assert_allclose(ib.numpy().flatten(), xl, atol=1e-5, rtol=1e-4)
+    npt.assert_allclose(tx.numpy().flatten(), x, atol=1e-5, rtol=1e-3)

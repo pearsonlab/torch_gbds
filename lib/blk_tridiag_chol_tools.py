@@ -25,7 +25,7 @@ def blk_tridiag_chol(A, B):
     L = torch.potrf(A[0], upper=False)
     R[0][0] = L
 
-    for i in range(B.size()[0]):
+    for i in range(B.size(0)):
         C = torch.t(torch.gesv(B[i], L)[0])
         D = A[i + 1] - torch.matmul(C, torch.t(C))
         L = torch.potrf(D, upper=False)
@@ -52,24 +52,23 @@ def blk_chol_inv(A, B, b, lower=True, transpose=False):
     Outputs:
     x - solution of Cx = b
     '''
-    def _step(acc, inputs):
-        x = acc
-        A, B, b = inputs
-        return tf.matrix_solve(A, b - tf.matmul(B, x))
+    X = torch.FloatTensor(A.size(0), A.size(1))
 
     if transpose:
         A = torch.transpose(A, 1, 2)
         B = torch.transpose(B, 1, 2)
-        
+
     if lower:
-        x0 = tf.matrix_solve(A[0], b[0])
-        X = tf.scan(_step, [A[1:], B, b[1:]], initializer=x0)
-        X = tf.concat([tf.expand_dims(x0,0), X], 0)
+        x = torch.gesv(b[0], A[0])[0]
+        X[0] = x
+        for i in range(B.size(0)):
+            x = torch.gesv(b[i + 1].unsqueeze(1) - torch.mm(B[i], x), A[i + 1])[0]
+            X[i + 1] = x
     else:
-        # xN = Tla.matrix_inverse(A[-1]).dot(b[-1])
-        # def upper_step(Akm1, Bkm1, bkm1, xk):
-        #     return Tla.matrix_inverse(Akm1).dot(bkm1-(Bkm1).dot(xk))
-        # X = theano.scan(fn = upper_step, sequences=[A[:-1][::-1], B[::-1], b[:-1][::-1]], outputs_info=[xN])[0]
-        # X = T.concatenate([T.shape_padleft(xN), X])[::-1]
-        pass
+        x = torch.gesv(b[-1], A[-1])[0]
+        X[-1] = x
+        for i in range(-1, -B.size(0) - 1, -1):
+            x = torch.gesv(b[i - 1].unsqueeze(1) - torch.mm(B[i], x), A[i - 1])[0]
+            X[i - 1] = x
+
     return X
