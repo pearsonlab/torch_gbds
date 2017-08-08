@@ -20,7 +20,7 @@ def blk_tridiag_chol(A, B):
         * R[0] - [T x n x n] tensor of block diagonal elements of Cholesky decomposition
         * R[1] - [T-1 x n x n] tensor of (lower) 1st block off-diagonal elements of Cholesky
     """
-    R = [torch.FloatTensor(A.size()), torch.FloatTensor(B.size())]
+    R = [torch.Tensor(A.size()), torch.Tensor(B.size())]
     L = torch.potrf(A[0], upper=False)
     R[0][0] = L
 
@@ -51,7 +51,7 @@ def blk_chol_inv(A, B, b, lower=True, transpose=False):
     Outputs:
     x - solution of Cx = b
     """
-    X = torch.FloatTensor(A.size(0), A.size(1))
+    X = torch.Tensor(A.size(0), A.size(1))
 
     if transpose:
         A = torch.transpose(A, 1, 2)
@@ -90,7 +90,7 @@ def blk_chol_mtimes(A, B, x, lower = True, transpose = False):
     Outputs:
     b - result of Cx = b
     """
-    b = torch.FloatTensor(A.size(0), A.size(1))
+    b = torch.Tensor(A.size(0), A.size(1))
 
     if transpose:
         A = torch.transpose(A, 1, 2)

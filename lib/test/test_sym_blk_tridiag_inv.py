@@ -20,8 +20,8 @@ fullmat = np.bmat([[npA,     npB, npZ,   npZ],
 
 alist = [npA, npC, npC, npC]
 blist = [npB, npD, npB]
-AAin = torch.from_numpy(np.array(alist))
-BBin = torch.from_numpy(np.array(blist))
+AAin = torch.Tensor(np.array(alist))
+BBin = torch.Tensor(np.array(blist))
 
 def test_compute_sym_blk_tridiag():
     D, OD, S = sym.compute_sym_blk_tridiag(AAin, BBin)
@@ -39,7 +39,7 @@ def test_compute_sym_blk_tridiag_inv_b():
     # test solving the linear sysstem Ay=b
     # now let's implement the solver (IE, we want to solve for y in Ay=b)
     npb = np.asmatrix(np.arange(4*2, dtype=prec).reshape((4,2)))
-    b = torch.from_numpy(npb)
+    b = torch.Tensor(npb)
 
     y = sym.compute_sym_blk_tridiag_inv_b(S,D,b)
 
@@ -48,7 +48,7 @@ def test_compute_sym_blk_tridiag_inv_b():
 
 def test_compute_sym_blk_tridiag_inds():
     D, OD, S = sym.compute_sym_blk_tridiag(AAin, BBin)
-    the_blocks = torch.from_numpy(np.array([npA, npB, npC, npD]))
+    the_blocks = torch.Tensor(np.array([npA, npB, npC, npD]))
 
     iia = torch.from_numpy(np.array([0, 2, 2, 2]))
     iib = torch.from_numpy(np.array([1, 3, 1]))

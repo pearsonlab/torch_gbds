@@ -29,8 +29,8 @@ def test_blk_tridiag_chol():
     alist = [cholmat[i:(i+2),i:(i+2)] for i in range(0, cholmat.shape[0], 2)]
     blist = [cholmat[(i+2):(i+4),i:(i+2)].T for i in range(0, cholmat.shape[0] - 2, 2)]
 
-    A = torch.from_numpy(np.stack(alist))
-    B = torch.from_numpy(np.stack(blist))
+    A = torch.Tensor(np.stack(alist))
+    B = torch.Tensor(np.stack(blist))
 
     R = blk.blk_tridiag_chol(A, B)
 
@@ -47,9 +47,9 @@ def test_blk_chol_inv():
 
     alist = [npF, npC, npE, npG]
     blist = [npB.T, npD.T, npB.T]
-    A = torch.from_numpy(np.stack(alist))
-    B = torch.from_numpy(np.stack(blist))
-    b = torch.from_numpy(npb)
+    A = torch.Tensor(np.stack(alist))
+    B = torch.Tensor(np.stack(blist))
+    b = torch.Tensor(npb)
 
     # now solve C * x = b by inverting one Cholesky factor of C at a time
     ib = blk.blk_chol_inv(A, B, b)
@@ -61,9 +61,9 @@ def test_blk_chol_inv():
 def test_blk_chol_mtimes():
     alist = [npF, npC, npE, npG]
     blist = [npB.T, npD.T, npB.T]
-    A = torch.from_numpy(np.stack(alist))
-    B = torch.from_numpy(np.stack(blist))
-    x = torch.from_numpy(npb)
+    A = torch.Tensor(np.stack(alist))
+    B = torch.Tensor(np.stack(blist))
+    x = torch.Tensor(npb)
 
     b = lowermat.dot(np.array([1, 2, 3, 4, 5, 6, 7, 8]).astype(prec))
     bt = lowermat.T.dot(np.array([1, 2, 3, 4, 5, 6, 7, 8]).astype(prec))
