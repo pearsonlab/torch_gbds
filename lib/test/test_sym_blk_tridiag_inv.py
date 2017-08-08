@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import numpy.testing as npt
 
-import sym_blk_tridiag_inv as sym
+import torch_gbds.lib.sym_blk_tridiag_inv as sym
 
 # Build a block tridiagonal matrix
 prec = np.float32

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import numpy.testing as npt
 
-import blk_tridiag_chol_tools as blk
+import torch_gbds.lib.blk_tridiag_chol_tools as blk
 
 # shared testing data
 prec = np.float32

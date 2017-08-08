@@ -25,8 +25,8 @@ def blk_tridiag_chol(A, B):
     R[0][0] = L
 
     for i in range(B.size(0)):
-        C = torch.t(torch.gesv(B[i], L)[0])
-        D = A[i + 1] - torch.matmul(C, torch.t(C))
+        C = torch.gesv(B[i], L)[0].t()
+        D = A[i + 1] - torch.matmul(C, C.t())
         L = torch.potrf(D, upper=False)
         R[0][i + 1], R[1][i] = L, C
 

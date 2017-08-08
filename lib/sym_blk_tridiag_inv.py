@@ -54,22 +54,22 @@ def compute_sym_blk_tridiag(AA, BB, iia=None, iib=None):
     S[-1] = torch.mm(BB[iib[-1]], AA[iia[-1]].inverse())
     for i in range(nT - 3, -1, -1):
         S[i] = (torch.mm(BB[iib[i]], torch.inverse(AA[iia[i + 1]] -
-             torch.mm(S[i + 1], torch.t(BB[iib[i + 1]])))))
+             torch.mm(S[i + 1], BB[iib[i + 1]].t()))))
 
     D = torch.FloatTensor(nT, d, d)
-    D[0] = (AA[iia[0]] - torch.mm(BB[iib[0]], torch.t(S[0]))).inverse()
+    D[0] = (AA[iia[0]] - torch.mm(BB[iib[0]], S[0].t())).inverse()
 
     for i in range(1, nT - 1):
-        Q = (AA[iia[i]] - torch.mm(BB[iib[i]], torch.t(S[i]))).inverse()
-        D[i] = torch.mm(Q, III + torch.mm(torch.t(BB[iib[i - 1]]),
+        Q = (AA[iia[i]] - torch.mm(BB[iib[i]], S[i].t())).inverse()
+        D[i] = torch.mm(Q, III + torch.mm(BB[iib[i - 1]].t(),
                         torch.mm(D[i - 1], S[i - 1])))
 
-    D[-1] = torch.mm(AA[iia[-1]].inverse(), III + torch.mm(torch.t(BB[iib[-1]]),
+    D[-1] = torch.mm(AA[iia[-1]].inverse(), III + torch.mm(BB[iib[-1]].t(),
                         torch.mm(D[-2], S[-1])))
 
     OD = torch.FloatTensor(nT - 1, d, d)
     for i in range(nT - 1):
-        OD[i] = torch.mm(torch.t(S[i]), D[i])
+        OD[i] = torch.mm(S[i].t(), D[i])
 
     return D, OD, S
 
@@ -99,10 +99,10 @@ def compute_sym_blk_tridiag_inv_b(S,D,b):
 
     q = torch.FloatTensor(nT - 1, d)
     x = torch.FloatTensor(nT, d)
-    q[0] = torch.mv(torch.t(S[0]), torch.mv(D[0], b[0]))
+    q[0] = torch.mv(S[0].t(), torch.mv(D[0], b[0]))
     x[0] = torch.mv(D[0], p[0])
     for i in range(1, nT - 1):
-        q[i] = torch.mv(torch.t(S[i]), q[i - 1] + torch.mv(D[i], b[i]))
+        q[i] = torch.mv(S[i].t(), q[i - 1] + torch.mv(D[i], b[i]))
         x[i] = torch.mv(D[i], p[i]) + q[i - 1]
     x[-1] = torch.mv(D[-1], p[-1]) + q[-1]
 
