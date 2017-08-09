@@ -56,7 +56,7 @@ def test_blk_chol_inv():
     tx = blk.blk_chol_inv(A, B, ib, lower=False, transpose=True)
 
     npt.assert_allclose(ib.numpy().flatten(), xl, atol=1e-5, rtol=1e-4)
-    npt.assert_allclose(tx.numpy().flatten(), x, atol=1e-5, rtol=1e-3)
+    npt.assert_allclose(tx.numpy().flatten(), x, atol=1e-5, rtol=3e-3)
 
 def test_blk_chol_mtimes():
     alist = [npF, npC, npE, npG]
