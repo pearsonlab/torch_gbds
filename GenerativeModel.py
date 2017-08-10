@@ -20,12 +20,6 @@ class GenerativeModel(torch.nn.Module):
 
         self.Xsamp = Parameter(torch.zeros(xDim))
 
-    def evaluateLogDensity(self):
-        """
-        Return a theano function that evaluates the density of the GenerativeModel.
-        """
-        raise Exception('Cannot call function of interface class')
-
     def getParams(self):
         """
         Return parameters of the GenerativeModel.
