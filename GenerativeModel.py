@@ -20,12 +20,6 @@ class GenerativeModel(torch.nn.Module):
 
         self.Xsamp = Parameter(torch.zeros(xDim))
 
-    def getParams(self):
-        """
-        Return parameters of the GenerativeModel.
-        """
-        raise Exception('Cannot call function of interface class')
-
     def generateSamples(self):
         """
         generates joint samples
