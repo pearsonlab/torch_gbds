@@ -6,6 +6,7 @@ implementation here: https://github.com/earcher/vilds/blob/master/code/lib/sym_b
 
 import torch
 import numpy as np
+from torch.autograd import Variable
 
 def compute_sym_blk_tridiag(AA, BB, iia=None, iib=None):
     """
@@ -32,7 +33,7 @@ def compute_sym_blk_tridiag(AA, BB, iia=None, iib=None):
 
     Implemented in Pytorch by JMP, 2017.
     """
-    BB = - BB  # To match the convention of Jain et al.
+    BB = -BB  # To match the convention of Jain et al.
 
     # number of blocks
     if iia is None:
@@ -48,15 +49,15 @@ def compute_sym_blk_tridiag(AA, BB, iia=None, iib=None):
     if iib is None:
         iib = range(nT - 1)
 
-    III = torch.eye(d)
+    III = Variable(torch.eye(d), requires_grad=False)
 
-    S = torch.Tensor(nT - 1, d, d)
+    S = Variable(torch.Tensor(nT - 1, d, d))
     S[-1] = torch.mm(BB[iib[-1]], AA[iia[-1]].inverse())
     for i in range(nT - 3, -1, -1):
         S[i] = (torch.mm(BB[iib[i]], torch.inverse(AA[iia[i + 1]] -
              torch.mm(S[i + 1], BB[iib[i + 1]].t()))))
 
-    D = torch.Tensor(nT, d, d)
+    D = Variable(torch.Tensor(nT, d, d))
     D[0] = (AA[iia[0]] - torch.mm(BB[iib[0]], S[0].t())).inverse()
 
     for i in range(1, nT - 1):
@@ -67,7 +68,7 @@ def compute_sym_blk_tridiag(AA, BB, iia=None, iib=None):
     D[-1] = torch.mm(AA[iia[-1]].inverse(), III + torch.mm(BB[iib[-1]].t(),
                         torch.mm(D[-2], S[-1])))
 
-    OD = torch.Tensor(nT - 1, d, d)
+    OD = Variable(torch.Tensor(nT - 1, d, d))
     for i in range(nT - 1):
         OD[i] = torch.mm(S[i].t(), D[i])
 
@@ -92,13 +93,13 @@ def compute_sym_blk_tridiag_inv_b(S,D,b):
     """
     nT, d = b.size()
 
-    p = torch.Tensor(nT, d)
+    p = Variable(torch.Tensor(nT, d))
     p[-1] = b[-1]
     for i in range(nT - 2, -1, -1):
         p[i] = b[i] + torch.mv(S[i], p[i + 1])
 
-    q = torch.Tensor(nT - 1, d)
-    x = torch.Tensor(nT, d)
+    q = Variable(torch.Tensor(nT - 1, d))
+    x = Variable(torch.Tensor(nT, d))
     q[0] = torch.mv(S[0].t(), torch.mv(D[0], b[0]))
     x[0] = torch.mv(D[0], p[0])
     for i in range(1, nT - 1):

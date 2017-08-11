@@ -92,7 +92,7 @@ class LDS(GenerativeModel):
 
 
         # we assume diagonal covariance (RChol is a vector)
-        self.Rinv = 1/self.RChol.pow(2)
+        self.Rinv = self.RChol.pow(2).reciprocal()
         self.Lambda = torch.inverse(torch.matmul(self.QChol, self.QChol.t()))
         self.Lambda0 = torch.inverse(torch.matmul(self.Q0Chol, self.Q0Chol.t()))
 
